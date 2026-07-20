@@ -8,6 +8,10 @@ export function redactUrl(_url: string): string {
 }
 
 export async function postNote(apiUrl: string, content: string): Promise<PostResult> {
+  // Never leak the secret URL in error output — applied to any message that
+  // might embed it, including nested `cause` details from undici failures.
+  const redact = (s: string) => s.split(apiUrl).join(redactUrl(apiUrl))
+
   let res: Response
   try {
     res = await fetch(apiUrl, {
@@ -16,13 +20,22 @@ export async function postNote(apiUrl: string, content: string): Promise<PostRes
       body: JSON.stringify({ content, content_type: "markdown" }),
     })
   } catch (err) {
-    const raw = err instanceof Error ? err.message : String(err)
-    // Never leak the secret URL in error output.
-    const safe = raw.split(apiUrl).join(redactUrl(apiUrl))
-    return { ok: false, message: `Network error: ${safe}` }
+    const msg = err instanceof Error ? err.message : String(err)
+    // undici wraps the real reason (ECONNREFUSED, DNS, TLS) in err.cause;
+    // surface it so failures are actionable instead of a bare "fetch failed".
+    const cause = err instanceof Error && err.cause instanceof Error ? `: ${err.cause.message}` : ""
+    return { ok: false, message: `Network error: ${redact(msg + cause)}` }
   }
 
-  const body = await res.text()
+  let body: string
+  try {
+    body = await res.text()
+  } catch (err) {
+    // The connection can die between headers and body; postNote must never
+    // reject, so this is reported the same way as a pre-response failure.
+    const msg = err instanceof Error ? err.message : String(err)
+    return { ok: false, message: `Network error: ${redact(msg)}` }
+  }
   let message = body
   try {
     const parsed = JSON.parse(body) as { message?: string }

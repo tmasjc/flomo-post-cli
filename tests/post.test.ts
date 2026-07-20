@@ -67,4 +67,43 @@ describe("postNote", () => {
     expect(result.message).not.toContain("secret456")
     expect(result.message).toContain("https://flomoapp.com/iwh/****")
   })
+
+  it("includes the cause's message for undici-style fetch failures", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(
+      new TypeError("fetch failed", { cause: new Error("connect ECONNREFUSED 127.0.0.1:443") }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await postNote(URL, "hello")
+
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain("ECONNREFUSED")
+  })
+
+  it("redacts the secret URL even when it is embedded in the cause message", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(
+      new TypeError("fetch failed", { cause: new Error(`connect failed for ${URL}`) }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await postNote(URL, "hello")
+
+    expect(result.ok).toBe(false)
+    expect(result.message).not.toContain("secret456")
+    expect(result.message).toContain("https://flomoapp.com/iwh/****")
+  })
+
+  it("resolves (does not reject) when res.text() fails, redacting the message", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.reject(new Error("terminated")),
+    } as unknown as Response)
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await postNote(URL, "hello")
+
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain("terminated")
+  })
 })

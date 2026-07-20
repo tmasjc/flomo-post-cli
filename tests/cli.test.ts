@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { main, type Deps } from "../src/cli"
+import { main, readAll, type Deps } from "../src/cli"
 
 const API_URL = "https://flomoapp.com/iwh/abc/token/"
 
@@ -20,6 +20,33 @@ function makeDeps(overrides: Partial<Deps> = {}) {
   }
   return { deps, out, err }
 }
+
+describe("readAll", () => {
+  it("reassembles a multi-byte UTF-8 character split across chunk boundaries", async () => {
+    // "你" (U+4F60) encodes to bytes [0xe4, 0xbd, 0xa0]; splitting mid-character
+    // and decoding each Buffer independently would yield U+FFFD replacement chars.
+    async function* chunks() {
+      yield Buffer.from([0xe4])
+      yield Buffer.from([0xbd, 0xa0])
+    }
+
+    const result = await readAll(chunks())
+
+    expect(result).toBe("你")
+    expect(result).not.toContain("�")
+  })
+
+  it("handles plain string chunks", async () => {
+    async function* chunks() {
+      yield "hello "
+      yield "world"
+    }
+
+    const result = await readAll(chunks())
+
+    expect(result).toBe("hello world")
+  })
+})
 
 describe("flomo-post new", () => {
   it("joins args and posts them", async () => {

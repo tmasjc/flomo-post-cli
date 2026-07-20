@@ -9,6 +9,12 @@ import { isValidApiUrl, resolveApiUrl, saveApiUrl } from "./config"
 
 const VERSION: string = createRequire(import.meta.url)("../package.json").version
 
+export async function readAll(stream: AsyncIterable<Buffer | string>): Promise<string> {
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk))
+  return Buffer.concat(chunks).toString("utf8")
+}
+
 export interface Deps {
   stdout: (line: string) => void
   stderr: (line: string) => void
@@ -98,11 +104,7 @@ export function defaultDeps(): Deps {
     stdout: (line) => process.stdout.write(line + "\n"),
     stderr: (line) => process.stderr.write(line + "\n"),
     isStdinTTY: process.stdin.isTTY === true,
-    readStdin: async () => {
-      let data = ""
-      for await (const chunk of process.stdin) data += chunk
-      return data
-    },
+    readStdin: () => readAll(process.stdin),
     promptForUrl: () =>
       new Promise<string>((resolve, reject) => {
         const rl = createInterface({ input: process.stdin, output: process.stderr })
