@@ -1,0 +1,30 @@
+{
+  "name": "flomo-post",
+  "version": "0.1.0",
+  "description": "Post notes to flomo from the command line",
+  "type": "module",
+  "bin": {
+    "flomo-post": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/cli.ts",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
