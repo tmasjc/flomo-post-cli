@@ -1,6 +1,11 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs"
 import { createRequire } from "node:module"
+import { createInterface } from "node:readline/promises"
+import { pathToFileURL } from "node:url"
 import type { PostResult } from "./post"
+import { postNote } from "./post"
+import { isValidApiUrl, resolveApiUrl, saveApiUrl } from "./config"
 
 const VERSION: string = createRequire(import.meta.url)("../package.json").version
 
@@ -86,4 +91,42 @@ async function runInit(deps: Deps): Promise<number> {
   const path = deps.saveApiUrl(url)
   deps.stdout(`Saved to ${path}`)
   return 0
+}
+
+export function defaultDeps(): Deps {
+  return {
+    stdout: (line) => process.stdout.write(line + "\n"),
+    stderr: (line) => process.stderr.write(line + "\n"),
+    isStdinTTY: process.stdin.isTTY === true,
+    readStdin: async () => {
+      let data = ""
+      for await (const chunk of process.stdin) data += chunk
+      return data
+    },
+    promptForUrl: async () => {
+      // Prompt on stderr so stdout stays clean for scripting.
+      const rl = createInterface({ input: process.stdin, output: process.stderr })
+      const answer = await rl.question("Paste your flomo webhook URL: ")
+      rl.close()
+      return answer
+    },
+    post: postNote,
+    resolveApiUrl,
+    saveApiUrl,
+    isValidApiUrl,
+  }
+}
+
+function isDirectRun(): boolean {
+  if (!process.argv[1]) return false
+  try {
+    // realpathSync resolves the npx/npm bin symlink to dist/cli.js.
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+  } catch {
+    return false
+  }
+}
+
+if (isDirectRun()) {
+  main(process.argv.slice(2), defaultDeps()).then((code) => process.exit(code))
 }
