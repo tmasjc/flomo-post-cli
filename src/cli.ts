@@ -106,9 +106,22 @@ export function defaultDeps(): Deps {
     promptForUrl: async () => {
       // Prompt on stderr so stdout stays clean for scripting.
       const rl = createInterface({ input: process.stdin, output: process.stderr })
-      const answer = await rl.question("Paste your flomo webhook URL: ")
-      rl.close()
-      return answer
+      return new Promise<string>((resolve, reject) => {
+        let closed = false
+        rl.once("close", () => {
+          closed = true
+          reject(new Error("stdin closed before answer"))
+        })
+        const questionPromise = rl.question("Paste your flomo webhook URL: ")
+        questionPromise
+          .then((answer: string) => {
+            rl.close()
+            if (!closed) resolve(answer)
+          })
+          .catch((err: unknown) => {
+            if (!closed) reject(err)
+          })
+      })
     },
     post: postNote,
     resolveApiUrl,
