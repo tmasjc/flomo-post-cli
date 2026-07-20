@@ -103,26 +103,15 @@ export function defaultDeps(): Deps {
       for await (const chunk of process.stdin) data += chunk
       return data
     },
-    promptForUrl: async () => {
-      // Prompt on stderr so stdout stays clean for scripting.
-      const rl = createInterface({ input: process.stdin, output: process.stderr })
-      return new Promise<string>((resolve, reject) => {
-        let closed = false
-        rl.once("close", () => {
-          closed = true
-          reject(new Error("stdin closed before answer"))
-        })
-        const questionPromise = rl.question("Paste your flomo webhook URL: ")
-        questionPromise
-          .then((answer: string) => {
-            rl.close()
-            if (!closed) resolve(answer)
-          })
-          .catch((err: unknown) => {
-            if (!closed) reject(err)
-          })
-      })
-    },
+    promptForUrl: () =>
+      new Promise<string>((resolve, reject) => {
+        const rl = createInterface({ input: process.stdin, output: process.stderr })
+        rl.once("close", () => reject(new Error("stdin closed before answer")))
+        rl.question("Paste your flomo webhook URL: ").then((answer) => {
+          resolve(answer) // settle FIRST — close() below synchronously emits 'close', whose reject is then a no-op
+          rl.close()
+        }, reject)
+      }),
     post: postNote,
     resolveApiUrl,
     saveApiUrl,
