@@ -128,5 +128,12 @@ function isDirectRun(): boolean {
 }
 
 if (isDirectRun()) {
-  main(process.argv.slice(2), defaultDeps()).then((code) => process.exit(code))
+  main(process.argv.slice(2), defaultDeps()).then(
+    (code) => process.exit(code),
+    (err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err)
+      process.stderr.write(msg + "\n")
+      process.exit(1)
+    },
+  )
 }
