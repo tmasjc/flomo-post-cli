@@ -1,6 +1,6 @@
 {
   "name": "flomo-post",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Post notes to flomo from the command line",
   "keywords": [
     "flomo",
