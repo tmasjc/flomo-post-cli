@@ -75,3 +75,16 @@ src/
 - `npm run build` — bundle with tsup
 - `npm test` — run vitest
 - `npm run dev` — run the CLI from source (e.g. `tsx src/cli.ts`)
+
+## Releasing
+
+See [docs/RELEASING.md](docs/RELEASING.md).
+
+Releases publish to npm from GitHub Actions via **OIDC trusted publishing** —
+`npm version <patch|minor|major> && git push && git push --tags`.
+
+There is **no npm token** anywhere, by design. If a release fails, do not fix it
+by creating one: classic tokens are deprecated and 2FA-bypass granular tokens
+lose publishing rights around January 2027. The urgent-fix fallback is a local
+`npm publish` with a one-time password. The release doc covers the failure
+modes.
