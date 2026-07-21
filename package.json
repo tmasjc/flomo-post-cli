@@ -2,6 +2,23 @@
   "name": "flomo-post",
   "version": "0.1.0",
   "description": "Post notes to flomo from the command line",
+  "keywords": [
+    "flomo",
+    "cli",
+    "notes",
+    "note-taking",
+    "webhook",
+    "memo"
+  ],
+  "homepage": "https://github.com/tmasjc/flomo-post-cli#readme",
+  "bugs": {
+    "url": "https://github.com/tmasjc/flomo-post-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmasjc/flomo-post-cli.git"
+  },
+  "author": "tmasjc",
   "type": "module",
   "bin": {
     "flomo-post": "dist/cli.js"
@@ -11,6 +28,9 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsup src/cli.ts --format esm --clean",
