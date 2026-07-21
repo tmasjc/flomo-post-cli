@@ -1,8 +1,13 @@
 # Flomo Post
 
+[![npm](https://img.shields.io/npm/v/flomo-post.svg)](https://www.npmjs.com/package/flomo-post)
+[![CI](https://github.com/tmasjc/flomo-post-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/tmasjc/flomo-post-cli/actions/workflows/ci.yml)
+[![node](https://img.shields.io/node/v/flomo-post.svg)](https://nodejs.org)
+[![license](https://img.shields.io/npm/l/flomo-post.svg)](LICENSE)
+
 Post notes to [Flomo](https://flomoapp.com) from the command line.
 
-Zero runtime dependencies — a single small binary built on Node's native `fetch`.
+Zero runtime dependencies — a single ~6 kB bundle built on Node's native `fetch`.
 
 ## Requirements
 
@@ -72,6 +77,21 @@ npm test            # vitest, fetch always mocked — never hits the network
 npm run typecheck   # tsc --noEmit, strict
 npm run build       # tsup → dist/cli.js
 npm run dev -- new "from source"   # run the CLI via tsx
+```
+
+CI runs typecheck, tests, and build on Node 20, 22, and 24, and separately
+verifies the bundled CLI still runs on the Node 18 floor declared in `engines`.
+
+## Releasing
+
+Releases publish to npm from GitHub Actions via OIDC trusted publishing — no
+tokens are involved. See [docs/RELEASING.md](docs/RELEASING.md).
+
+Every release from `v0.1.1` onward carries a signed provenance attestation
+linking the tarball to the commit and workflow run that built it:
+
+```bash
+npm audit signatures
 ```
 
 ## License
