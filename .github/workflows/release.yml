@@ -10,16 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # required for npm provenance
+      id-token: write # mints the OIDC token npm exchanges for publish rights
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22 # trusted publishing requires Node >= 22.14.0
           registry-url: https://registry.npmjs.org
           cache: npm
+
+      # Node 22 ships npm 10.x; trusted publishing needs npm >= 11.5.1.
+      - run: npm install -g npm@latest
 
       - run: npm ci
 
@@ -36,6 +39,7 @@ jobs:
 
       - run: npm test
 
-      - run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # No NODE_AUTH_TOKEN: auth comes from OIDC via the trusted publisher
+      # configured on npmjs.com. Provenance is generated automatically, so
+      # --provenance is not passed.
+      - run: npm publish
